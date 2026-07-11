@@ -30,8 +30,8 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '100vh',
-    padding: '0, 10px',
+    minHeight: '100vh',
+    padding: '0 10px',
   },
 }));
 
@@ -102,7 +102,7 @@ function Login(props) {
     <Container className={classes.container}>
       <ThemeProvider theme={theme}>
         <Container component="main" maxWidth="xs" sx={{
-          backgroundColor: 'white', marginTop: '100px', marginBottom: '250px',
+          backgroundColor: 'white', marginTop: { xs: 4, sm: 8 }, marginBottom: { xs: 4, sm: 10 }, px: { xs: 2, sm: 3 }, py: { xs: 3, sm: 4 }, borderRadius: 2, boxShadow: 3,
         }}>
           <CssBaseline />
           <Box

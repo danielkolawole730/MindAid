@@ -42,6 +42,7 @@
     "graphql": "^16.5.0",
     "jsonwebtoken": "^8.5.1",
     "mongoose": "^6.3.3",
+    "serverless-http": "^4.0.0",
     "stripe": "^9.1.0"
   }
 }

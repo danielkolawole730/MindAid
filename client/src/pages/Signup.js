@@ -29,8 +29,8 @@ const useStyles = makeStyles((theme) => ({
     flexDirection: 'column',
     justifyContent: 'center',
     alignItems: 'center',
-    height: '100vh',
-    padding: '0, 10px',
+    minHeight: '100vh',
+    padding: '0 10px',
   },
 }));
 
@@ -42,41 +42,99 @@ function Signup(props) {
   const [addUser] = useMutation(ADD_USER);
   const [emailState, setEmailState] = useState(false);
   const [passwordState, setPasswordState] = useState(false);
+  const [emailTouched, setEmailTouched] = useState(false);
+  const [passwordTouched, setPasswordTouched] = useState(false);
   const [pwHelper, setPwHelper] = useState('');
   const [emailHelper, setEmailHelper] = useState('');
   const [checked, setChecked] = useState(false);
 
+  const validEmail = (value) => {
+    const normalizedEmail = value.toLowerCase().trim();
+    const emailPattern = /^[a-z0-9](?:[a-z0-9._%+-]{0,62}[a-z0-9])?@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
 
+    if (!emailPattern.test(normalizedEmail)) {
+      return false;
+    }
+
+    const [localPart, domain] = normalizedEmail.split('@');
+    if (!localPart || !domain || localPart.startsWith('.') || localPart.endsWith('.') || localPart.includes('..')) {
+      return false;
+    }
+
+    const blockedDomains = [
+      'mailinator.com',
+      '10minutemail.com',
+      'tempmail.com',
+      'guerrillamail.com',
+      'yopmail.com',
+      'maildrop.cc',
+      'getnada.com',
+      'trashmail.com',
+      'dispostable.com',
+      'mailnesia.com'
+    ];
+
+    if (blockedDomains.includes(domain)) {
+      return false;
+    }
+
+    const blockedPrefixes = ['example', 'test', 'fake', 'invalid', 'localhost', 'noreply', 'no-reply'];
+    const domainPrefix = domain.split('.')[0];
+    return !blockedPrefixes.includes(domainPrefix);
+  };
 
   const handleFormSubmit = async (event) => {
     event.preventDefault();
-    formState.email = formState.email.toLowerCase();
+    const email = formState.email.toLowerCase().trim();
+
+    if (!validEmail(email)) {
+      setEmailState(false);
+      setEmailHelper('Please enter a real-looking email address.');
+      return;
+    }
+
+    if (formState.password.length < 8) {
+      setPasswordState(false);
+      setPwHelper('Password must be at least 8 characters.');
+      return;
+    }
 
     try {
       const mutationResponse = await addUser({
         variables: {
-          email: formState.email,
+          email,
           password: formState.password,
         },
       });
 
+      setEmailHelper('');
       const token = mutationResponse.data.addUser.token;
       Auth.login(token);
     } catch (error) {
-      setEmailState(false)
-      setEmailHelper('Email already exists. Please try logging in.')
+      const message = error.message || '';
+      if (message.toLowerCase().includes('duplicate key') || message.toLowerCase().includes('email already exists')) {
+        setEmailState(false);
+        setEmailHelper('Email already exists. Please try logging in.');
+      } else if (message.toLowerCase().includes('does not appear to accept mail') || message.toLowerCase().includes('could not verify') || message.toLowerCase().includes('valid email address')) {
+        setEmailState(false);
+        setEmailHelper(message);
+      } else {
+        setEmailState(false);
+        setEmailHelper('Unable to sign up. Please check your email and try again.');
+      }
     }
   };
 
   const handleChangePw = (event) => {
     const { name, value } = event.target;
     if (value.length > 8) {
-      setPasswordState(true)
+      setPasswordState(true);
+      setPwHelper('');
     } else {
-      setPasswordState(false)
-      setPwHelper('Password must be at least 8 characters.')
-
+      setPasswordState(false);
+      setPwHelper('Password must be at least 8 characters.');
     }
+    setPasswordTouched(true);
 
     setFormState({
       ...formState,
@@ -86,13 +144,16 @@ function Signup(props) {
 
   const handleChangeEmail = (event) => {
     const { name, value } = event.target;
-    const validEmail = new RegExp(/^([a-zA-Z0-9_.-]+)@([\da-zA-Z.-]+)\.([a-zA-Z.]{2,6})$/)
-    if (validEmail.test(value)) {
-      setEmailState(true)
+    const emailValue = value.toLowerCase();
+
+    if (validEmail(emailValue)) {
+      setEmailState(true);
+      setEmailHelper('Email looks good!');
     } else {
-      setEmailState(false)
-      setEmailHelper('Please enter a valid email')
+      setEmailState(false);
+      setEmailHelper('Please enter a real-looking email address.');
     }
+    setEmailTouched(true);
     setFormState({
       ...formState,
       [name]: value,
@@ -103,7 +164,7 @@ function Signup(props) {
     <Container className={classes.container}>
       <ThemeProvider theme={theme}>
         <Container component="main" maxWidth="xs" sx={{
-          backgroundColor: 'white', marginTop: '100px', marginBottom: '250px',
+          backgroundColor: 'white', marginTop: { xs: 4, sm: 8 }, marginBottom: { xs: 4, sm: 10 }, px: { xs: 2, sm: 3 }, py: { xs: 3, sm: 4 }, borderRadius: 2, boxShadow: 3,
         }}>
           <CssBaseline />
           <Box
@@ -130,8 +191,8 @@ function Signup(props) {
                 name="email"
                 autoComplete="email"
                 onChange={handleChangeEmail}
-                error={!emailState}
-                helperText={emailHelper}
+                error={emailTouched && !emailState}
+                helperText={emailTouched ? emailHelper : ''}
                 margin="normal"
               />
               <TextField
@@ -144,8 +205,8 @@ function Signup(props) {
                 id="password"
                 autoComplete="new-password"
                 onChange={handleChangePw}
-                error={!passwordState}
-                helperText={pwHelper}
+                error={passwordTouched && !passwordState}
+                helperText={passwordTouched ? pwHelper : ''}
               />
 
               <Link to='/legal'>Terms</Link>

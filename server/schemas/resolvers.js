@@ -3,6 +3,57 @@ const { User, QuizSet, QuizResult, TherapyNote, Solution } = require('../models'
 const Recording = require('../models/Recording');
 const { signToken } = require('../utils/auth');
 
+const validateEmailAddress = (email) => {
+    const normalizedEmail = email.toLowerCase().trim();
+    const emailPattern = /^[a-z0-9](?:[a-z0-9._%+-]{0,62}[a-z0-9])?@(?:[a-z0-9](?:[a-z0-9-]{0,61}[a-z0-9])?\.)+[a-z]{2,63}$/i;
+
+    if (!emailPattern.test(normalizedEmail)) {
+        return {
+            valid: false,
+            message: 'Please enter a real-looking email address.'
+        };
+    }
+
+    const [localPart, domain] = normalizedEmail.split('@');
+    if (!localPart || !domain || localPart.startsWith('.') || localPart.endsWith('.') || localPart.includes('..')) {
+        return {
+            valid: false,
+            message: 'Please enter a real-looking email address.'
+        };
+    }
+
+    const blockedDomains = [
+        'mailinator.com',
+        '10minutemail.com',
+        'tempmail.com',
+        'guerrillamail.com',
+        'yopmail.com',
+        'maildrop.cc',
+        'getnada.com',
+        'trashmail.com',
+        'dispostable.com',
+        'mailnesia.com'
+    ];
+
+    if (blockedDomains.includes(domain)) {
+        return {
+            valid: false,
+            message: 'Please use a real email address. Temporary email services are not allowed.'
+        };
+    }
+
+    const blockedPrefixes = ['example', 'test', 'fake', 'invalid', 'localhost', 'noreply', 'no-reply'];
+    const domainPrefix = domain.split('.')[0];
+    if (blockedPrefixes.includes(domainPrefix)) {
+        return {
+            valid: false,
+            message: 'Please enter a real-looking email address.'
+        };
+    }
+
+    return { valid: true };
+};
+
 const resolvers = {
     Query: {
         // user should return each quizSet with it's results
@@ -41,7 +92,19 @@ const resolvers = {
     },
     Mutation: {
         addUser: async (parent, args) => {
-            const user = await User.create(args);
+            const normalizedEmail = args.email.toLowerCase().trim();
+            const emailValidation = validateEmailAddress(normalizedEmail);
+
+            if (!emailValidation.valid) {
+                throw new Error(emailValidation.message);
+            }
+
+            const existingUser = await User.findOne({ email: normalizedEmail });
+            if (existingUser) {
+                throw new Error('Email already exists. Please try logging in.');
+            }
+
+            const user = await User.create({ ...args, email: normalizedEmail });
             const token = signToken(user);
 
             return { token, user };

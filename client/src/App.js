@@ -1,5 +1,6 @@
 import * as React from 'react';
 import { styled, useTheme } from '@mui/material/styles';
+import useMediaQuery from '@mui/material/useMediaQuery';
 import Box from '@mui/material/Box';
 import Drawer from '@mui/material/Drawer';
 import CssBaseline from '@mui/material/CssBaseline';
@@ -22,7 +23,6 @@ import DashboardIcon from '@mui/icons-material/Dashboard';
 import PsychologyIcon from '@mui/icons-material/Psychology';
 
 import LightbulbIcon from '@mui/icons-material/Lightbulb';
-import GitHubIcon from '@mui/icons-material/GitHub';
 
 import CreateIcon from '@mui/icons-material/Create';
 import LoginIcon from '@mui/icons-material/Login';
@@ -77,16 +77,16 @@ const client = new ApolloClient({
 
 const drawerWidth = 240;
 
-const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
-  ({ theme, open }) => ({
+const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' && prop !== 'mobile' })(
+  ({ theme, open, mobile }) => ({
     flexGrow: 1,
     padding: theme.spacing(3),
     transition: theme.transitions.create('margin', {
       easing: theme.transitions.easing.sharp,
       duration: theme.transitions.duration.leavingScreen,
     }),
-    marginLeft: `-${drawerWidth}px`,
-    ...(open && {
+    marginLeft: mobile ? 0 : `-${drawerWidth}px`,
+    ...(open && !mobile && {
       transition: theme.transitions.create('margin', {
         easing: theme.transitions.easing.easeOut,
         duration: theme.transitions.duration.enteringScreen,
@@ -97,13 +97,13 @@ const Main = styled('main', { shouldForwardProp: (prop) => prop !== 'open' })(
 );
 
 const AppBar = styled(MuiAppBar, {
-  shouldForwardProp: (prop) => prop !== 'open',
-})(({ theme, open }) => ({
+  shouldForwardProp: (prop) => prop !== 'open' && prop !== 'mobile',
+})(({ theme, open, mobile }) => ({
   transition: theme.transitions.create(['margin', 'width'], {
     easing: theme.transitions.easing.sharp,
     duration: theme.transitions.duration.leavingScreen,
   }),
-  ...(open && {
+  ...(open && !mobile && {
     width: `calc(100% - ${drawerWidth}px)`,
     marginLeft: `${drawerWidth}px`,
     transition: theme.transitions.create(['margin', 'width'], {
@@ -124,6 +124,7 @@ const DrawerHeader = styled('div')(({ theme }) => ({
 
 export default function App() {
   const theme = useTheme();
+  const isMobile = useMediaQuery(theme.breakpoints.down('md'));
   const [open, setOpen] = React.useState(false);
 
   const handleDrawerOpen = () => {
@@ -132,6 +133,19 @@ export default function App() {
 
   const handleDrawerClose = () => {
     setOpen(false);
+  };
+
+  const handleNavClick = () => {
+    if (isMobile) {
+      setOpen(false);
+    }
+  };
+
+
+  const handleMainClick = () => {
+    if (!isMobile && open) {
+      setOpen(false);
+    }
   };
 
   const listOne = [
@@ -162,15 +176,6 @@ export default function App() {
     },
   ];
 
-  const listTwo = [
-
-    {
-      text: 'Github',
-      icon: <GitHubIcon />,
-      link: 'https://github.com/nitrotap/mental-health-check',
-    }
-  ];
-
   const listThree = Auth.loggedIn()
     ? []
     : [
@@ -194,14 +199,14 @@ export default function App() {
         <Router>
           <Box sx={{ display: 'flex', }}>
             <CssBaseline />
-            <AppBar position="fixed" z-index='1400' open={open} sx={{ backgroundColor: '#326B96' }}>
+            <AppBar position="fixed" open={open && !isMobile} mobile={isMobile} sx={{ backgroundColor: '#326B96' }}>
               <Toolbar>
                 <IconButton
                   color="inherit"
                   aria-label="open drawer"
                   onClick={handleDrawerOpen}
                   edge="start"
-                  sx={{ mr: 2, ...(open && { display: 'none' }) }}
+                  sx={{ mr: 2, ...(open && !isMobile ? { display: 'none' } : {}) }}
                 >
                   <MenuIcon />
                 </IconButton>
@@ -219,9 +224,11 @@ export default function App() {
                   boxSizing: 'border-box',
                 },
               }}
-              variant="persistent"
+              variant={isMobile ? 'temporary' : 'persistent'}
               anchor="left"
               open={open}
+              onClose={handleDrawerClose}
+              ModalProps={{ keepMounted: true }}
             >
               <Box sx={{ backgroundColor: '#326B96', height: '100%', color: 'white', border: 'none', }}>
                 <DrawerHeader>
@@ -234,7 +241,7 @@ export default function App() {
                   {listOne.map((item) => {
                     const { text, icon, link } = item;
                     return (
-                      <Link to={link} key={text} style={{ textDecoration: 'none' }}>
+                      <Link to={link} key={text} style={{ textDecoration: 'none' }} onClick={handleNavClick}>
                         <ListItem disablePadding>
                           <ListItemButton>
                             {icon && <ListItemIcon sx={{ color: 'white' }}>{icon}</ListItemIcon>}
@@ -245,28 +252,11 @@ export default function App() {
                     )
                   })}
                 </List>
-                <Divider variant='middle' color='white' />
-                <List>
-                  {listTwo.map((item, index) => {
-                    const { text, icon, link } = item;
-                    return (
-                      <a href={link} key={index} target="_blank" rel="noreferrer" style={{ textDecoration: 'none' }}>
-                        <ListItem key={text} disablePadding>
-                          <ListItemButton >
-                            {icon && <ListItemIcon sx={{ color: 'white' }}>{icon}</ListItemIcon>}
-                            <ListItemText sx={{ color: 'white' }} primary={text} />
-                          </ListItemButton>
-                        </ListItem>
-                      </a>
-                    )
-                  })}
-                </List>
-                <Divider variant='middle' color='white' />
                 <List>
                   {listThree.map((item, index) => {
                     const { text, icon, link } = item;
                     return (
-                      <Link to={link} key={index} style={{ textDecoration: 'none' }}>
+                      <Link to={link} key={index} style={{ textDecoration: 'none' }} onClick={handleNavClick}>
                         <ListItem key={text} disablePadding>
                           <ListItemButton>
                             {icon && <ListItemIcon sx={{ color: 'white' }}>{icon}</ListItemIcon>}
@@ -277,7 +267,7 @@ export default function App() {
                     )
                   })}
                   {isLoggedIn && (
-                    <Link to={'/'} onClick={() => Auth.logout()} style={{ textDecoration: 'none' }}>
+                    <Link to={'/'} onClick={() => { Auth.logout(); handleNavClick(); }} style={{ textDecoration: 'none' }}>
                       <ListItem key='logout' disablePadding>
                         <ListItemButton>
                           <ListItemIcon sx={{ color: 'white' }}><LogoutIcon /></ListItemIcon>
@@ -289,7 +279,7 @@ export default function App() {
                 </List>
               </Box>
             </Drawer>
-            <Main open={open} sx={{
+            <Main onClick={handleMainClick} open={open} mobile={isMobile} sx={{
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
