@@ -13,10 +13,8 @@ mongoose.connection.on('disconnected', () => {
 mongoose.connect(process.env.MONGODB_URI || 'mongodb://localhost/mhc_db', {
     useNewUrlParser: true,
     useUnifiedTopology: true,
-    serverSelectionTimeoutMS: 5000,
-    connectTimeoutMS: 5000,
-    // useCreateIndex: true,
-    // useFindAndModify: false
+    serverSelectionTimeoutMS: 20000,
+    connectTimeoutMS: 20000,
 }).catch((err) => {
     console.warn('MongoDB connection failed (server will continue):', err.message);
 });
