@@ -20,7 +20,7 @@ const getHandler = async () => {
       context: authMiddleware,
     });
     await server.start();
-    server.applyMiddleware({ app, path: '/.netlify/functions/graphql' });
+    server.applyMiddleware({ app, path: '/graphql' });
     serverlessHandler = serverless(app);
   }
   return serverlessHandler;
@@ -28,5 +28,6 @@ const getHandler = async () => {
 
 exports.handler = async (event, context) => {
   const handler = await getHandler();
+  event.path = '/graphql';
   return handler(event, context);
 };

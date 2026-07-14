@@ -89,7 +89,22 @@ const useStyles = makeStyles((theme) => ({
 	},
 	buttonTitle: {
 		color: 'white'
-	}
+	},
+	chartContainer: {
+		backgroundColor: 'white',
+		position: 'relative',
+		width: '100%',
+		maxWidth: '600px',
+		height: 'auto',
+		marginBottom: 20,
+		padding: '10px',
+		marginLeft: 'auto',
+		marginRight: 'auto',
+		[theme.breakpoints.down('sm')]: {
+			maxWidth: '95%',
+			padding: '5px',
+		},
+	},
 }));
 
 
@@ -182,12 +197,7 @@ const Dashboard = () => {
 	const chartHandler = (len) => {
 		if (len > 0) {
 			return (
-				<Box sx={{
-					backgroundColor: 'white',
-					position: 'relative',
-					width: '30vw',
-					marginBottom: 20
-				}}>
+				<Box className={classes.chartContainer}>
 					<Chart count={count} quizCount={quizCount} />
 				</Box>)
 		}
@@ -220,10 +230,10 @@ const Dashboard = () => {
 			<Typography variant='h2' color={'white'} style={{ marginBottom: 10 }}>
 				Dashboard
 			</Typography>
-			{chartHandler(user.quizzes.length)}
+			{chartHandler((user.quizzes || []).length)}
 			<Container style={{ marginBottom: 20 }}>
 				<Grid container spacing={3}>
-					<QuizList quizzes={user.quizzes} />
+					<QuizList quizzes={user.quizzes || []} />
 				</Grid>
 			</Container>
 			<Button onClick={handleDownloadClick} aria-label='Download Data'><Typography className={classes.buttonTitle}>Download My Data</Typography></Button>

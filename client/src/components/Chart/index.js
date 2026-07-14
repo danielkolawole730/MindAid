@@ -21,18 +21,42 @@ ChartJS.register(
 
 export const options = {
     responsive: true,
+    maintainAspectRatio: false,
+    indexAxis: 'x',
     scales: {
         y: {
-            beginAtZero: true
+            beginAtZero: true,
+            ticks: {
+                font: {
+                    size: 12,
+                }
+            }
+        },
+        x: {
+            ticks: {
+                font: {
+                    size: 11,
+                }
+            }
         }
     },
     plugins: {
         legend: {
             position: 'top',
+            labels: {
+                font: {
+                    size: 11,
+                },
+                boxWidth: 12,
+                padding: 10,
+            }
         },
         title: {
             display: true,
             text: 'Count Data for Positive Responses',
+            font: {
+                size: 13,
+            }
         },
     },
 };
@@ -57,7 +81,11 @@ function Chart(props) {
         ],
     };
 
-    return <Bar options={options} data={data} />;
+    return (
+        <div style={{ position: 'relative', width: '100%', height: '300px' }}>
+            <Bar options={options} data={data} />
+        </div>
+    );
 }
 
 export default Chart;
